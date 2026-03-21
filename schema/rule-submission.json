@@ -1,0 +1,95 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/lumiosecurity/rules/schema/rule-submission.json",
+  "title": "Virgil Rule Submission",
+  "description": "Schema for community-contributed detection rules",
+  "type": "object",
+  "required": ["_meta", "summary"],
+  "additionalProperties": false,
+
+  "properties": {
+    "_meta": {
+      "type": "object",
+      "required": ["schemaVersion", "submittedAt", "confidence", "verticals", "ruleType"],
+      "additionalProperties": false,
+      "properties": {
+        "schemaVersion": { "type": "string", "enum": ["1.0"] },
+        "submittedAt":   { "type": "string", "format": "date-time" },
+        "phishUrl":      { "type": ["string", "null"] },
+        "confidence":    { "type": "string", "enum": ["high", "medium", "low"] },
+        "campaignTags":  { "type": "array", "items": { "type": "string" } },
+        "verticals": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "enum": ["financial", "crypto", "sso", "ecommerce", "general"] }
+        },
+        "ruleType": { "type": "string", "enum": ["domain", "source", "combined"] }
+      }
+    },
+
+    "summary": { "type": "string", "minLength": 10, "maxLength": 500 },
+
+    "iocs": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+
+    "domainRules": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "brandEntries": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["name", "vertical", "domains", "typos"],
+            "additionalProperties": false,
+            "properties": {
+              "name":     { "type": "string", "pattern": "^[a-z0-9-]+$" },
+              "vertical": { "type": "string", "enum": ["financial", "crypto", "sso", "ecommerce", "general"] },
+              "domains":  { "type": "array", "minItems": 1, "items": { "type": "string" } },
+              "typos":    { "type": "array", "minItems": 1, "items": { "type": "string" } },
+              "note":     { "type": "string" }
+            }
+          }
+        },
+        "signalFunctions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["id", "description", "severity", "weight", "code"],
+            "additionalProperties": false,
+            "properties": {
+              "id":          { "type": "string", "pattern": "^s-[a-z0-9-]+$" },
+              "description": { "type": "string", "minLength": 5 },
+              "severity":    { "type": "string", "enum": ["high", "medium", "low"] },
+              "weight":      { "type": "number", "minimum": 0.05, "maximum": 0.50 },
+              "code":        { "type": "string", "minLength": 10 },
+              "note":        { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+
+    "sourcePatterns": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "group", "description", "severity", "weight", "source", "patternString"],
+        "additionalProperties": false,
+        "properties": {
+          "id":            { "type": "string", "pattern": "^[a-z0-9-]+$" },
+          "group":         { "type": "string", "enum": ["cdnGating", "captchaGating", "phishkitSignatures", "botEvasion", "obfuscation"] },
+          "description":   { "type": "string", "minLength": 5 },
+          "severity":      { "type": "string", "enum": ["high", "medium", "low"] },
+          "weight":        { "type": "number", "minimum": 0.05, "maximum": 0.50 },
+          "source":        { "type": "string", "enum": ["html", "js", "both"] },
+          "patternString": { "type": "string", "minLength": 3 },
+          "patternFlags":  { "type": "string", "pattern": "^[gimsuy]*$" },
+          "note":          { "type": "string" }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,142 @@
+name: Validate Rule Submission
+
+on:
+  pull_request:
+    paths:
+      - 'rules/**/*.json'
+    types: [opened, synchronize, reopened]
+
+permissions:
+  pull-requests: write
+  contents: read
+  issues: write
+
+jobs:
+  validate:
+    name: Validate & Review
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm install ajv ajv-formats
+
+      - name: Find changed rule files
+        id: changed
+        run: |
+          FILES=$(git diff --name-only origin/${{ github.base_ref }}...HEAD -- 'rules/**/*.json' | tr '\n' ' ')
+          echo "files=$FILES" >> $GITHUB_OUTPUT
+          echo "Changed files: $FILES"
+
+      - name: Validate rule files
+        id: validate
+        run: node .github/scripts/validate-rules.js ${{ steps.changed.outputs.files }}
+
+      - name: Check for duplicate rule IDs
+        id: dedup
+        run: node .github/scripts/check-duplicates.js ${{ steps.changed.outputs.files }}
+
+      - name: Test regex compilation
+        id: regex
+        run: node .github/scripts/test-regex.js ${{ steps.changed.outputs.files }}
+
+      - name: Post review comment
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+
+            const results = {
+              validate: '${{ steps.validate.outcome }}',
+              dedup:    '${{ steps.dedup.outcome }}',
+              regex:    '${{ steps.regex.outcome }}',
+            };
+
+            const allPassed = Object.values(results).every(r => r === 'success');
+
+            // Read detailed output if written by scripts
+            let details = '';
+            try { details = fs.readFileSync('/tmp/validation-report.md', 'utf8'); } catch {}
+
+            const statusIcon  = allPassed ? '✅' : '❌';
+            const statusText  = allPassed ? 'All checks passed' : 'Some checks failed';
+
+            const body = [
+              `## ${statusIcon} Virgil Rule Validation — ${statusText}`,
+              '',
+              `| Check | Result |`,
+              `|-------|--------|`,
+              `| Schema validation | ${results.validate === 'success' ? '✅ Pass' : '❌ Fail'} |`,
+              `| Duplicate ID check | ${results.dedup === 'success' ? '✅ Pass' : '❌ Fail'} |`,
+              `| Regex compilation | ${results.regex === 'success' ? '✅ Pass' : '❌ Fail'} |`,
+              '',
+              details || '',
+              '',
+              allPassed
+                ? '**This submission is ready for human review.** A maintainer will check the rules for false-positive risk and coverage quality.'
+                : '**Please fix the issues above before this PR can be reviewed.**',
+            ].join('\n');
+
+            await github.rest.issues.createComment({
+              owner:      context.repo.owner,
+              repo:       context.repo.repo,
+              issue_number: context.issue.number,
+              body,
+            });
+
+      - name: Auto-label by vertical and type
+        if: steps.validate.outcome == 'success'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs   = require('fs');
+            const path = require('path');
+            const files = '${{ steps.changed.outputs.files }}'.trim().split(/\s+/).filter(Boolean);
+
+            const labelsToAdd = new Set(['needs-review']);
+
+            for (const f of files) {
+              try {
+                const data = JSON.parse(fs.readFileSync(f, 'utf8'));
+                const meta = data._meta || {};
+
+                // Vertical labels
+                (meta.verticals || []).forEach(v => labelsToAdd.add(`vertical:${v}`));
+
+                // Rule type label
+                if (meta.ruleType) labelsToAdd.add(`type:${meta.ruleType}`);
+
+                // Confidence label
+                if (meta.confidence) labelsToAdd.add(`confidence:${meta.confidence}`);
+
+              } catch (e) {
+                console.warn(`Could not read ${f}:`, e.message);
+              }
+            }
+
+            console.log('Applying labels:', [...labelsToAdd]);
+
+            try {
+              await github.rest.issues.addLabels({
+                owner:        context.repo.owner,
+                repo:         context.repo.repo,
+                issue_number: context.issue.number,
+                labels:       [...labelsToAdd],
+              });
+            } catch (e) {
+              console.warn('Label application failed (labels may not exist yet):', e.message);
+            }
+
+      - name: Fail if validation failed
+        if: steps.validate.outcome == 'failure' || steps.dedup.outcome == 'failure' || steps.regex.outcome == 'failure'
+        run: exit 1

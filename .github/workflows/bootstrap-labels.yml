@@ -1,0 +1,48 @@
+name: Bootstrap Labels
+
+on:
+  workflow_dispatch:
+
+permissions:
+  issues: write
+
+jobs:
+  create-labels:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create labels
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const labels = [
+              { name: 'user-feedback',           color: '0075ca', description: 'User-submitted feedback' },
+              { name: 'feedback:false_positive',  color: 'e4e669', description: 'Safe site incorrectly flagged' },
+              { name: 'feedback:false_negative',  color: 'd73a4a', description: 'Phishing site not detected' },
+              { name: 'feedback:wrong_brand',     color: 'e99695', description: 'Wrong brand identified' },
+              { name: 'feedback:wrong_level',     color: 'f9d0c4', description: 'Wrong risk level assigned' },
+              { name: 'verdict:dangerous',        color: 'd73a4a', description: 'Was shown as dangerous' },
+              { name: 'verdict:suspicious',       color: 'e4e669', description: 'Was shown as suspicious' },
+              { name: 'needs-triage',             color: 'e4e669', description: 'Needs initial review' },
+              { name: 'confirmed-fp',             color: '0e8a16', description: 'Confirmed false positive' },
+              { name: 'confirmed-fn',             color: 'd73a4a', description: 'Confirmed false negative' },
+              { name: 'rule-updated',             color: '0075ca', description: 'Rule updated in response' },
+              { name: 'duplicate',                color: 'cfd3d7', description: 'Already reported' },
+              { name: 'wont-fix',                 color: 'ffffff', description: 'Intentional behaviour' },
+              { name: 'agent-triaged',            color: '0075ca', description: 'Processed by triage agent' },
+              { name: 'appeal-processed',         color: '0075ca', description: 'Processed by appeal agent' },
+              { name: 'campaign-cluster',         color: 'd73a4a', description: 'AI-identified campaign cluster' },
+              { name: 'gap-analysis',             color: 'e99695', description: 'Detection gap analysis item' },
+            ];
+            for (const label of labels) {
+              try {
+                await github.rest.issues.createLabel({
+                  owner: context.repo.owner,
+                  repo:  context.repo.repo,
+                  name:  label.name, color: label.color, description: label.description,
+                });
+                console.log(`Created: ${label.name}`);
+              } catch (e) {
+                if (e.status === 422) console.log(`Already exists: ${label.name}`);
+                else console.error(`Failed ${label.name}:`, e.message);
+              }
+            }

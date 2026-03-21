@@ -1,0 +1,40 @@
+name: Agent — Rule Quality Review
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+    paths:
+      - 'rules/**/*.json'
+
+permissions:
+  pull-requests: write
+  contents: read
+
+jobs:
+  review:
+    name: Quality Review
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout intel-feeds (agents live there)
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ github.repository_owner }}/intel-feeds
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install wrangler
+        run: npm install -g wrangler
+
+      - name: Run rule quality agent
+        env:
+          ANTHROPIC_API_KEY:    ${{ secrets.ANTHROPIC_API_KEY }}
+          GITHUB_TOKEN:         ${{ secrets.GITHUB_TOKEN }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          ORG_NAME:             ${{ github.repository_owner }}
+          PR_NUMBER:            ${{ github.event.pull_request.number }}
+          COMMUNITY_REPO:       ${{ github.event.repository.name }}
+        run: node agents/agent-rule-quality.js
