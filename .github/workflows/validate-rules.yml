@@ -51,7 +51,7 @@ jobs:
 
       - name: Post review comment
         if: always()
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             const fs = require('fs');
@@ -96,7 +96,7 @@ jobs:
 
       - name: Auto-label by vertical and type
         if: steps.validate.outcome == 'success'
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             const fs   = require('fs');
