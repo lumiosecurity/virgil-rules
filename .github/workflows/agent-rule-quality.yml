@@ -19,7 +19,7 @@ jobs:
       - name: Checkout intel-feeds (agents live there)
         uses: actions/checkout@v4
         with:
-          repository: ${{ github.repository_owner }}/intel-feeds
+          repository: ${{ github.repository_owner }}/virgil-intel-feeds
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - uses: actions/setup-node@v4
