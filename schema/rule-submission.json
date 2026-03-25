@@ -21,7 +21,7 @@
         "verticals": {
           "type": "array",
           "minItems": 1,
-          "items": { "type": "string", "enum": ["financial", "crypto", "sso", "ecommerce", "general"] }
+          "items": { "type": "string", "enum": ["financial", "crypto", "sso", "ecommerce", "general", "business", "cloud_storage", "entertainment", "gambling", "gaming", "government", "logistics", "messaging", "productivity", "social", "technology", "telecom"] }
         },
         "ruleType": { "type": "string", "enum": ["domain", "source", "combined"] }
       }
@@ -46,7 +46,7 @@
             "additionalProperties": false,
             "properties": {
               "name":     { "type": "string", "pattern": "^[a-z0-9-]+$" },
-              "vertical": { "type": "string", "enum": ["financial", "crypto", "sso", "ecommerce", "general"] },
+              "vertical": { "type": "string", "enum": ["financial", "crypto", "sso", "ecommerce", "general", "business", "cloud_storage", "entertainment", "gambling", "gaming", "government", "logistics", "messaging", "productivity", "social", "technology", "telecom"] },
               "domains":  { "type": "array", "minItems": 1, "items": { "type": "string" } },
               "typos":    { "type": "array", "minItems": 1, "items": { "type": "string" } },
               "note":     { "type": "string" }
@@ -88,6 +88,30 @@
           "patternString": { "type": "string", "minLength": 3 },
           "patternFlags":  { "type": "string", "pattern": "^[gimsuy]*$" },
           "note":          { "type": "string" }
+        }
+      }
+    },
+
+    "ocrPatterns": {
+      "type": "array",
+      "description": "Patterns matched against OCR-extracted text from page screenshots. Used for image-heavy phishing pages where DOM text is sparse.",
+      "items": {
+        "type": "object",
+        "required": ["id", "description", "severity", "weight", "match", "field"],
+        "additionalProperties": false,
+        "properties": {
+          "id":               { "type": "string", "pattern": "^[a-z0-9-]+$" },
+          "description":      { "type": "string", "minLength": 5 },
+          "severity":         { "type": "string", "enum": ["high", "medium", "low"] },
+          "weight":           { "type": "number", "minimum": 0.05, "maximum": 0.50 },
+          "match":            { "type": "string", "enum": ["phrase", "brand_mismatch", "regex"] },
+          "field":            { "type": "string", "enum": ["brandsMentioned", "credentialPhrases", "formLabels", "urgencyPhrases", "pageTitle", "externalLinks"] },
+          "phrases":          { "type": "array", "items": { "type": "string" } },
+          "brands":           { "type": "array", "items": { "type": "string" } },
+          "canonicalDomains": { "type": "array", "items": { "type": "string" } },
+          "patternString":    { "type": "string" },
+          "patternFlags":     { "type": "string", "pattern": "^[gimsuy]*$" },
+          "note":             { "type": "string" }
         }
       }
     }
