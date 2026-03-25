@@ -19,8 +19,8 @@ jobs:
       - name: Checkout intel-feeds (agents live there)
         uses: actions/checkout@v4
         with:
-          repository: ${{ github.repository_owner }}/intel-feeds
-          token: ${{ secrets.GITHUB_TOKEN }}
+          repository: ${{ github.repository_owner }}/virgil-intel-feeds
+          token: ${{ secrets.VIRGIL_GITHUB_TOKEN }}
 
       - uses: actions/setup-node@v4
         with:
@@ -32,8 +32,9 @@ jobs:
       - name: Run rule quality agent
         env:
           ANTHROPIC_API_KEY:    ${{ secrets.ANTHROPIC_API_KEY }}
-          GITHUB_TOKEN:         ${{ secrets.GITHUB_TOKEN }}
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          GITHUB_TOKEN:         ${{ secrets.VIRGIL_GITHUB_TOKEN }}
+          CLOUDFLARE_API_TOKEN:  ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           ORG_NAME:             ${{ github.repository_owner }}
           PR_NUMBER:            ${{ github.event.pull_request.number }}
           COMMUNITY_REPO:       ${{ github.event.repository.name }}
