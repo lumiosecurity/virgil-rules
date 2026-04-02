@@ -23,7 +23,7 @@
           "minItems": 1,
           "items": { "type": "string", "enum": ["financial", "crypto", "sso", "ecommerce", "general", "business", "cloud_storage", "entertainment", "gambling", "gaming", "government", "logistics", "messaging", "productivity", "social", "technology", "telecom"] }
         },
-        "ruleType": { "type": "string", "enum": ["domain", "source", "combined"] }
+        "ruleType": { "type": "string", "enum": ["domain", "source", "network", "combined"] }
       }
     },
 
@@ -136,6 +136,28 @@
           "patternString":    { "type": "string" },
           "patternFlags":     { "type": "string", "pattern": "^[gimsuy]*$" },
           "note":             { "type": "string" }
+        }
+      }
+    },
+
+    "networkPatterns": {
+      "type": "array",
+      "description": "Patterns matched against outbound HTTP request metadata (destination URLs, POST bodies, field names). Run in the content script exfiltration interceptor against live network requests.",
+      "items": {
+        "type": "object",
+        "required": ["id", "group", "description", "severity", "weight", "target", "patternString"],
+        "additionalProperties": false,
+        "properties": {
+          "id":            { "type": "string", "pattern": "^[a-z0-9-]+$" },
+          "group":         { "type": "string", "enum": ["cdnGating", "captchaGating", "phishkitSignatures", "botEvasion", "obfuscation", "brandImpersonation", "credentialHarvesting", "socialEngineering", "titleImpersonation", "typosquatPatterns", "urlHeuristics", "hostingPatterns", "suspiciousDomains"] },
+          "description":   { "type": "string", "minLength": 5 },
+          "severity":      { "type": "string", "enum": ["high", "medium", "low"] },
+          "weight":        { "type": "number", "minimum": 0.05, "maximum": 0.50 },
+          "target":        { "type": "string", "enum": ["url", "body", "fieldNames", "any"] },
+          "transport":     { "type": "string", "enum": ["any", "fetch", "xhr", "beacon", "websocket"], "default": "any" },
+          "patternString": { "type": "string", "minLength": 3 },
+          "patternFlags":  { "type": "string", "pattern": "^[gimsuy]*$" },
+          "note":          { "type": "string" }
         }
       }
     },
