@@ -1,0 +1,45 @@
+name: Meta-Rule Quality Gate (PR)
+on:
+  pull_request:
+    paths:
+      - 'rules/meta/**'
+
+permissions:
+  pull-requests: write
+  contents: read
+
+jobs:
+  meta-rule-gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Extract meta rules from PR
+        id: extract
+        run: |
+          RULES="[]"
+          for f in rules/meta/*.json; do
+            if [ -f "$f" ] && [ "$(basename $f)" != ".gitkeep.json" ]; then
+              # Extract metaRules array from each file and merge
+              RULES=$(node -e "
+                const fs = require('fs');
+                const existing = JSON.parse('$RULES');
+                const data = JSON.parse(fs.readFileSync('$f', 'utf-8'));
+                const merged = [...existing, ...(data.metaRules || [])];
+                console.log(JSON.stringify(merged));
+              " 2>/dev/null || echo "$RULES")
+            fi
+          done
+          echo "rules_json=$RULES" >> "$GITHUB_OUTPUT"
+
+      - name: Dispatch quality gate to virgil-intel-feeds
+        uses: peter-evans/repository-dispatch@v3
+        with:
+          token: ${{ secrets.CROSS_REPO_TOKEN }}
+          repository: lumiosecurity/virgil-intel-feeds
+          event-type: meta-rule-gate
+          client-payload: '{"pr_number": "${{ github.event.pull_request.number }}", "rules_json": ${{ toJSON(steps.extract.outputs.rules_json) }}}'
