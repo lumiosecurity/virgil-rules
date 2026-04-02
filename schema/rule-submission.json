@@ -138,6 +138,78 @@
           "note":             { "type": "string" }
         }
       }
+    },
+
+    "metaRules": {
+      "type": "array",
+      "description": "Cross-signal combination rules. Evaluated after all async signals merge. Can boost, replace, or downscore signal combinations.",
+      "items": {
+        "type": "object",
+        "required": ["id", "description", "conditions", "action"],
+        "additionalProperties": false,
+        "properties": {
+          "id":          { "type": "string", "pattern": "^[a-z0-9-]+$" },
+          "description": { "type": "string", "minLength": 10 },
+          "conditions": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "all": { "type": "array", "items": { "$ref": "#/$defs/metaCondition" } },
+              "any": { "type": "array", "items": { "$ref": "#/$defs/metaCondition" } }
+            }
+          },
+          "action": {
+            "type": "object",
+            "required": ["scope", "weight", "severity"],
+            "additionalProperties": false,
+            "properties": {
+              "scope":    { "type": "string", "enum": ["boost", "replace", "downscore"] },
+              "weight":   { "type": "number", "minimum": 0.0, "maximum": 0.60 },
+              "severity": { "type": "string", "enum": ["high", "medium", "low", "info"] }
+            }
+          },
+          "note": { "type": "string" }
+        }
+      }
+    }
+  },
+
+  "$defs": {
+    "numericOp": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "lt":  { "type": "number" },
+        "lte": { "type": "number" },
+        "gt":  { "type": "number" },
+        "gte": { "type": "number" },
+        "eq":  { "type": "number" },
+        "neq": { "type": "number" }
+      }
+    },
+    "metaCondition": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "signal":                   { "type": "string" },
+        "signal_group":             { "type": "string", "enum": ["phishkitSignatures", "cdnGating", "captchaGating", "botEvasion", "obfuscation", "brandImpersonation", "credentialHarvesting", "socialEngineering", "titleImpersonation", "typosquatPatterns", "urlHeuristics", "hostingPatterns", "suspiciousDomains"] },
+        "signal_prefix":            { "type": "string" },
+        "where":                    { "type": "object", "additionalProperties": { "$ref": "#/$defs/numericOp" } },
+        "has_form":                 { "type": "boolean" },
+        "has_password_form":        { "type": "boolean" },
+        "has_credit_card_form":     { "type": "boolean" },
+        "has_external_form":        { "type": "boolean" },
+        "has_login_form":           { "type": "boolean" },
+        "has_visual_match":         { "type": "boolean" },
+        "visual_match_confidence":  { "$ref": "#/$defs/numericOp" },
+        "visual_match_brand":       { "type": "string" },
+        "has_dom_hash_match":       { "type": "boolean" },
+        "dom_hash_brand":           { "type": "string" },
+        "domain_age_hours":         { "$ref": "#/$defs/numericOp" },
+        "domain_age_days":          { "$ref": "#/$defs/numericOp" },
+        "heuristic_score":          { "$ref": "#/$defs/numericOp" },
+        "not":                      { "$ref": "#/$defs/metaCondition" }
+      }
     }
   }
 }
