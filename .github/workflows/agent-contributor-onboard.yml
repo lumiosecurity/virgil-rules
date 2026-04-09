@@ -1,0 +1,42 @@
+name: Agent — Contributor Onboarding
+
+on:
+  pull_request:
+    types: [opened]
+  issues:
+    types: [opened]
+
+permissions:
+  pull-requests: write
+  issues: write
+  contents: read
+
+jobs:
+  contributor-onboard:
+    name: Contributor Onboarding
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout virgil-agents
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ github.repository_owner }}/virgil-agents
+          token: ${{ secrets.VIRGIL_GITHUB_TOKEN }}
+
+      - uses: actions/setup-node@v4
+        with: { node-version: '20' }
+
+      - name: Install dependencies
+        run: npm install -g wrangler && npm install @anthropic-ai/sdk 2>/dev/null || true
+
+      - name: Run contributor onboarding
+        env:
+          ANTHROPIC_API_KEY:     ${{ secrets.ANTHROPIC_API_KEY }}
+          GITHUB_TOKEN:          ${{ secrets.VIRGIL_GITHUB_TOKEN }}
+          CLOUDFLARE_API_TOKEN:  ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          ORG_NAME:              ${{ github.repository_owner }}
+          COMMUNITY_REPO:        ${{ github.event.repository.name }}
+          EVENT_TYPE:            ${{ github.event_name == 'pull_request' && 'pr' || 'issue' }}
+          EVENT_NUMBER:          ${{ github.event.pull_request.number || github.event.issue.number }}
+        run: node agents/agent-contributor-onboard.js

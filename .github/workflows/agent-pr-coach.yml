@@ -1,0 +1,41 @@
+name: Agent — PR Coach
+
+on:
+  pull_request_review:
+    types: [submitted]
+
+permissions:
+  pull-requests: write
+  contents: read
+
+jobs:
+  pr-coach:
+    name: PR Coach
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    if: |
+      github.event.review.state == 'changes_requested' &&
+      (github.event.review.user.login == 'lumio-7' || github.event.review.user.type == 'Bot')
+    steps:
+      - name: Checkout virgil-agents
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ github.repository_owner }}/virgil-agents
+          token: ${{ secrets.VIRGIL_GITHUB_TOKEN }}
+
+      - uses: actions/setup-node@v4
+        with: { node-version: '20' }
+
+      - name: Install dependencies
+        run: npm install -g wrangler && npm install @anthropic-ai/sdk 2>/dev/null || true
+
+      - name: Run PR coach
+        env:
+          ANTHROPIC_API_KEY:     ${{ secrets.ANTHROPIC_API_KEY }}
+          GITHUB_TOKEN:          ${{ secrets.VIRGIL_GITHUB_TOKEN }}
+          CLOUDFLARE_API_TOKEN:  ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          ORG_NAME:              ${{ github.repository_owner }}
+          COMMUNITY_REPO:        ${{ github.event.repository.name }}
+          PR_NUMBER:             ${{ github.event.pull_request.number }}
+        run: node agents/agent-pr-coach.js
