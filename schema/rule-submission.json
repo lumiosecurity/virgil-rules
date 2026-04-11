@@ -204,7 +204,7 @@
               },
               "weight": {
                 "type": "number",
-                "minimum": 0.05,
+                "minimum": 0,
                 "maximum": 0.5
               },
               "code": {
@@ -268,7 +268,7 @@
           },
           "weight": {
             "type": "number",
-            "minimum": 0.05,
+            "minimum": 0,
             "maximum": 0.5
           },
           "source": {
@@ -396,7 +396,7 @@
           },
           "weight": {
             "type": "number",
-            "minimum": 0.05,
+            "minimum": 0,
             "maximum": 0.5
           },
           "match": {
@@ -513,7 +513,7 @@
           },
           "weight": {
             "type": "number",
-            "minimum": 0.05,
+            "minimum": 0,
             "maximum": 0.5
           },
           "target": {
