@@ -16,10 +16,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - name: Checkout intel-feeds (agents live there)
+      - name: Checkout virgil-agents (agents live there)
         uses: actions/checkout@v4
         with:
-          repository: ${{ github.repository_owner }}/virgil-intel-feeds
+          repository: ${{ github.repository_owner }}/virgil-agents
           token: ${{ secrets.VIRGIL_GITHUB_TOKEN }}
 
       - uses: actions/setup-node@v4
